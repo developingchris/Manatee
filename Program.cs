@@ -15,11 +15,12 @@ namespace VidPub.Tasks {
         //there
         static bool _syncTestDB = false;
 
-        static string[] _args;
+        static List<string> _args;
+
         static void Main(string[] args) {
             var migrationDir = LocateMigrations();
 
-            _args = args;
+            _args = args.ToList();
             _development = new Migrator(migrationDir, "development");
             _test = new Migrator(migrationDir, "test",silent:true);
             _production = new Migrator(migrationDir, "production");
@@ -125,10 +126,9 @@ namespace VidPub.Tasks {
             }else{
                 HelpEmOut();
             }
+
             Console.WriteLine("Done! What next?");
-            var cmd = Console.ReadLine();
-            DecideWhatToDo(cmd);
-            
+            AskOrStepNextArg();
         }
         static void ListMigrations(){
             var migrationDir = new DirectoryInfo(LocateMigrations());
@@ -164,17 +164,36 @@ namespace VidPub.Tasks {
             Console.WriteLine(" ...  - finally - if you name it with _'s, I'll do my best to figure out a table, column, or index name");
             Console.WriteLine("----------------------------------------------------------------------------------");
             Console.WriteLine("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-            var command = Console.ReadLine();
-            DecideWhatToDo(command);
+            AskOrStepNextArg();
        }
         static void SayHello() {
             Console.WriteLine("Manatee - Migrations for .NET");
             Console.WriteLine("Current DB Version: {0}",_development.CurrentVersion);
             Console.WriteLine("You have {0} migrations with {1} un-run. Type 'list' to see more details", _development.LastVersion, _development.LastVersion - _development.CurrentVersion);
             Console.WriteLine(">> (type 'h' or 'help' for assistance)");
-            var command = Console.ReadLine();
+            AskOrStepNextArg();
+        }
+
+
+
+        static void AskOrStepNextArg()
+        {
+            string command = string.Empty;
+            if (_args.Any())
+            {
+                command = _args[0];
+                Console.WriteLine(command);
+                _args.RemoveAt(0);
+            }
+
+            if (string.IsNullOrWhiteSpace(command))
+            {
+                command = Console.ReadLine();
+            }
             DecideWhatToDo(command);
         }
+
+
         static string LocateMigrations() {
             //this is the bin/release or bin/debug
             var binDirectory = new DirectoryInfo(Directory.GetCurrentDirectory());
